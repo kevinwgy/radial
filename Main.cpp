@@ -67,9 +67,9 @@ int main(int argc, char* argv[])
   string rbf(argv[6]);
   if(IsTheSame(rbf, "MULTIQUADRIC"))
     phi = MathTools::phi1;
-  else if(IsTheSame(rbf, "INVERSE_MULTIQUADRIC"))
+  else if(IsTheSame(rbf, "INVERSEMULTIQUADRIC"))
     phi = MathTools::phi2;
-  else if(IsTheSame(rbf, "THIN_PLATE_SPLINE"))
+  else if(IsTheSame(rbf, "THINPLATESPLINE"))
     phi = MathTools::phi3;
   else if(IsTheSame(rbf, "GAUSSIAN"))
     phi = MathTools::phi4;
@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 
     //Write input to file
     for(auto&& xi : x)
-      file << setprecision(8) << xi << "    ";
+      file << fixed << setw(14) << setprecision(10) << xi << "  ";
 
     //Find points for interpolation
     int nFound = 0, counter = 0; 
@@ -193,6 +193,14 @@ int main(int argc, char* argv[])
     for(int i=0; i<nFound; i++)
       dist2node.push_back(make_pair(norm2(candidates[i].x, x), candidates[i].id));
     sort(dist2node.begin(), dist2node.end());
+/*
+    fprintf(stdout,"(%e, %e). nFound = %d.\n", x[0], x[1], nFound);
+    for(auto&& d2n : dist2node) {
+      int id = d2n.second;
+      fprintf(stdout,"- %d (%e, %e)->%e. d = %e.\n", id, input[id][0], input[id][1], output[id][0], d2n.first);
+    }
+    exit(-1);
+*/
     dist2node.resize(numPoints);
 
     //prepare to interpolate
@@ -209,9 +217,9 @@ int main(int argc, char* argv[])
         fd[j] = output[dist2node[j].second][i];
 
       MathTools::rbf_weight(dim_in, numPoints, xd.data(), r0, phi, fd.data(), rbf_weight.data());
-      MathTools::rbf_interp(dim_out, numPoints, xd.data(), r0, phi, rbf_weight.data(), 1, x.data(), &xinterp);
+      MathTools::rbf_interp(dim_in, numPoints, xd.data(), r0, phi, rbf_weight.data(), 1, x.data(), &xinterp);
 
-      file << setprecision(8) << "    " << xinterp;
+      file << "  " << fixed << setw(14) << setprecision(10) << xinterp;
     }
     file << endl;
 
@@ -220,6 +228,10 @@ int main(int argc, char* argv[])
       fprintf(stdout,"  o Done with %d points.\n", pid);
   }
 
+  fprintf(stdout,"  o Done.\n");
+
+  file.close();
+  fprintf(stdout,"- Saved results in %s.\n", argv[7]);
 
   //delete the tree
   if(dim_in == 1) //have to do this because template variable "dim" needs to be known at compile-time.
@@ -235,7 +247,7 @@ int main(int argc, char* argv[])
     delete static_cast<KDTree<Point, 5>*>(tree);
   }
  
-  file.close();
+  fprintf(stdout,"- Normal termination.\n");
   return 0;
 }
 
